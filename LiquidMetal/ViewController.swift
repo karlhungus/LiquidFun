@@ -8,6 +8,8 @@
 
 import UIKit
 import CoreMotion
+import QuartzCore
+import Metal
 
 class ViewController: UIViewController {
 
@@ -52,14 +54,14 @@ class ViewController: UIViewController {
     refreshUniformBuffer()
     buildRenderPipeline()
     // add this to viewDidLoad, below buildRenderPipeline()
-    render()
+    //render()
     
-    let displayLink = CADisplayLink(target: self, selector: Selector("update:"))
+    let displayLink = CADisplayLink(target: self, selector: #selector(ViewController.update(_:)))
     displayLink.frameInterval = 1
     displayLink.addToRunLoop(NSRunLoop.currentRunLoop(), forMode: NSDefaultRunLoopMode)
     
     motionManager.startAccelerometerUpdatesToQueue(NSOperationQueue(), withHandler: { (accelerometerData, error) -> Void in
-      let acceleration = accelerometerData.acceleration
+      let acceleration = accelerometerData!.acceleration
       let gravityX = self.gravity * Float(acceleration.x)
       let gravityY = self.gravity * Float(acceleration.y)
       LiquidFun.setGravity(Vector2D(x: gravityX, y: gravityY))
@@ -74,13 +76,13 @@ class ViewController: UIViewController {
   // add this method inside the class declaration
   func printParticleInfo() {
     let count = Int(LiquidFun.particleCountForSystem(particleSystem))
-    println("There are \(count) particles present")
+    print("There are \(count) particles present")
     
     let positions = UnsafePointer<Vector2D>(LiquidFun.particlePositionsForSystem(particleSystem))
     
     for i in 0..<count {
       let position = positions[i]
-      println("particle: \(i) position: (\(position.x), \(position.y))")
+      print("particle: \(i) position: (\(position.x), \(position.y))")
     }
   }
 
@@ -102,7 +104,7 @@ class ViewController: UIViewController {
     particleCount = Int(LiquidFun.particleCountForSystem(particleSystem))
     let positions = LiquidFun.particlePositionsForSystem(particleSystem)
     let bufferSize = sizeof(Float) * particleCount * 2
-    vertexBuffer = device.newBufferWithBytes(positions, length: bufferSize, options: nil)
+    vertexBuffer = device.newBufferWithBytes(positions, length: bufferSize, options: MTLResourceOptions.CPUCacheModeDefaultCache)
   }
   
   func refreshUniformBuffer () {
@@ -110,7 +112,7 @@ class ViewController: UIViewController {
     let screenSize: CGSize = UIScreen.mainScreen().bounds.size
     let screenWidth = Float(screenSize.width)
     let screenHeight = Float(screenSize.height)
-    let ndcMatrix = makeOrthographicMatrix(left: 0, right: screenWidth,
+    let ndcMatrix = makeOrthographicMatrix(0, right: screenWidth,
       bottom: 0, top: screenHeight,
       near: -1, far: 1)
     var radius = particleRadius
@@ -124,14 +126,14 @@ class ViewController: UIViewController {
     let uniformsStructSize = float4x4Size + floatSize * 2 + paddingBytesSize
     
     // 3
-    uniformBuffer = device.newBufferWithLength(uniformsStructSize, options: nil)
+    uniformBuffer = device.newBufferWithLength(uniformsStructSize, options: MTLResourceOptions.CPUCacheModeDefaultCache)
     let bufferPointer = uniformBuffer.contents()
     memcpy(bufferPointer, ndcMatrix, float4x4Size)
     memcpy(bufferPointer + float4x4Size, &ratio, floatSize)
     memcpy(bufferPointer + float4x4Size + floatSize, &radius, floatSize)
   }
   
-  func makeOrthographicMatrix(#left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> [Float] {
+  func makeOrthographicMatrix(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> [Float] {
     let ral = right + left
     let rsl = right - left
     let tab = top + bottom
@@ -155,24 +157,26 @@ class ViewController: UIViewController {
     pipelineDescriptor.vertexFunction = vertexProgram
     pipelineDescriptor.fragmentFunction = fragmentProgram
     pipelineDescriptor.colorAttachments[0].pixelFormat = .BGRA8Unorm
-    
-    var pipelineError : NSError?
-    pipelineState = device.newRenderPipelineStateWithDescriptor(pipelineDescriptor, error: &pipelineError)
-    
-    if (pipelineState == nil) {
-      println("Error occurred when creating render pipeline state: \(pipelineError)");
-    }
-    
-    // create a command queue for use later - channel to submit work to the GPU
-    commandQueue = device.newCommandQueue()
+
+    device.newRenderPipelineStateWithDescriptor(pipelineDescriptor, completionHandler: foo)
   }
-  
+
+  func foo(state: MTLRenderPipelineState?, error: NSError?) -> Void {
+    if error != nil {
+      print("Error occurred when creating render pipelinate: \(error)");
+    }
+    pipelineState = state
+    commandQueue = device.newCommandQueue()
+    render()
+
+  }
+
   // add this method
   func render() {
     var drawable = metalLayer.nextDrawable()
     
     let renderPassDescriptor = MTLRenderPassDescriptor()
-    renderPassDescriptor.colorAttachments[0].texture = drawable.texture
+    renderPassDescriptor.colorAttachments[0].texture = drawable!.texture
     renderPassDescriptor.colorAttachments[0].loadAction = .Clear
     renderPassDescriptor.colorAttachments[0].storeAction = .Store
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.0, green: 104.0/255.0, blue: 5.0/255.0, alpha: 1.0)
@@ -180,14 +184,14 @@ class ViewController: UIViewController {
     let commandBuffer = commandQueue.commandBuffer()
     
     let renderEncoder = commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor)
-    renderEncoder?.setRenderPipelineState(pipelineState)
-    renderEncoder?.setVertexBuffer(vertexBuffer, offset: 0, atIndex: 0)
-    renderEncoder?.setVertexBuffer(uniformBuffer, offset: 0, atIndex: 1)
+    renderEncoder.setRenderPipelineState(pipelineState)
+    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, atIndex: 0)
+    renderEncoder.setVertexBuffer(uniformBuffer, offset: 0, atIndex: 1)
     
-    renderEncoder?.drawPrimitives(.Point, vertexStart: 0, vertexCount: particleCount, instanceCount:1)
-    renderEncoder?.endEncoding()
+    renderEncoder.drawPrimitives(.Point, vertexStart: 0, vertexCount: particleCount, instanceCount:1)
+    renderEncoder.endEncoding()
     
-    commandBuffer.presentDrawable(drawable)
+    commandBuffer.presentDrawable(drawable!)
     commandBuffer.commit()
   }
   
@@ -199,7 +203,7 @@ class ViewController: UIViewController {
     }
   }
   
-override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
+override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
   for touchObject in touches {
     if let touch = touchObject as? UITouch {
       let touchLocation = touch.locationInView(view)
