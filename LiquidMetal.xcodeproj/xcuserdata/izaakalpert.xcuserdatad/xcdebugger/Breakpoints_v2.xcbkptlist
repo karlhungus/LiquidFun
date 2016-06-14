@@ -10,12 +10,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "LiquidMetal/ViewController.swift"
-            timestampString = "487601927.386533"
+            timestampString = "487603038.774085"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "168"
-            endingLineNumber = "168"
-            landmarkName = "foo(_:error:)"
+            startingLineNumber = "166"
+            endingLineNumber = "166"
+            landmarkName = "renderCompletionHanlder(_:error:)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "LiquidMetal/ViewController.swift"
-            timestampString = "487601906.018434"
+            timestampString = "487603038.774085"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "161"
-            endingLineNumber = "161"
+            startingLineNumber = "159"
+            endingLineNumber = "159"
             landmarkName = "buildRenderPipeline()"
             landmarkType = "5">
          </BreakpointContent>
@@ -42,11 +42,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "LiquidMetal/ViewController.swift"
-            timestampString = "487602512.790153"
+            timestampString = "487603038.774085"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "199"
-            endingLineNumber = "199"
+            startingLineNumber = "196"
+            endingLineNumber = "196"
             landmarkName = "update(_:)"
             landmarkType = "5">
             <Locations>
@@ -90,11 +90,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "LiquidMetal/ViewController.swift"
-            timestampString = "487602521.097631"
+            timestampString = "487603038.774085"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "200"
-            endingLineNumber = "200"
+            startingLineNumber = "197"
+            endingLineNumber = "197"
             landmarkName = "update(_:)"
             landmarkType = "5">
          </BreakpointContent>

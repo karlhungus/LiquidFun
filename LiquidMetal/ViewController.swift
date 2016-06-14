@@ -53,8 +53,6 @@ class ViewController: UIViewController {
     refreshVertexBuffer()
     refreshUniformBuffer()
     buildRenderPipeline()
-    // add this to viewDidLoad, below buildRenderPipeline()
-    //render()
     
     let displayLink = CADisplayLink(target: self, selector: #selector(ViewController.update(_:)))
     displayLink.frameInterval = 1
@@ -158,17 +156,16 @@ class ViewController: UIViewController {
     pipelineDescriptor.fragmentFunction = fragmentProgram
     pipelineDescriptor.colorAttachments[0].pixelFormat = .BGRA8Unorm
 
-    device.newRenderPipelineStateWithDescriptor(pipelineDescriptor, completionHandler: foo)
+    device.newRenderPipelineStateWithDescriptor(pipelineDescriptor, completionHandler: renderCompletionHanlder)
   }
 
-  func foo(state: MTLRenderPipelineState?, error: NSError?) -> Void {
+  func renderCompletionHanlder(state: MTLRenderPipelineState?, error: NSError?) -> Void {
     if error != nil {
       print("Error occurred when creating render pipelinate: \(error)");
     }
     pipelineState = state
     commandQueue = device.newCommandQueue()
     render()
-
   }
 
   // add this method
